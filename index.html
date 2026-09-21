@@ -151,7 +151,6 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-            // Âm báo hoàn thành vui tươi khi ra số 41
             const notes = [523.25, 659.25, 783.99, 1046.50]; // Đô, Mi, Sol, Đô cao
             notes.forEach((note, index) => {
                 setTimeout(() => {
@@ -168,13 +167,11 @@
             const display = document.getElementById('numberDisplay');
             const statusText = document.getElementById('statusText');
             
-            btn.disabled = true;
             statusText.innerText = `Lượt chơi: ${currentIndex + 1} / 5`;
 
             let counter = 0;
             const targetNumber = sequence[currentIndex];
             
-            // Hiệu ứng chạy số liên tục tạo cảm giác hồi hộp
             const rollInterval = setInterval(() => {
                 let randomTemp = Math.floor(Math.random() * 80) + 10;
                 display.innerText = randomTemp;
@@ -184,10 +181,9 @@
                 if (counter > 12) {
                     clearInterval(rollInterval);
                     
-                    // Hiển thị số chính thức của lượt đó
                     display.innerText = targetNumber;
                     display.classList.remove('slide-up');
-                    void display.offsetWidth; // Trigger reflow để chạy lại animation
+                    void display.offsetWidth; 
                     display.classList.add('slide-up');
 
                     if (targetNumber === 41) {
@@ -202,8 +198,7 @@
                     if (currentIndex < sequence.length) {
                         btn.disabled = false;
                     } else {
-                        btn.innerText = "Hoàn tất";
-                        statusText.innerText = "Đã hoàn thành! Chuẩn bị chuyển sang bài mới.";
+                        btn.disabled = true; // Giữ nguyên nút vô hiệu hóa ở lượt cuối khi đã ra số 41
                     }
                 }
             }, 80);
