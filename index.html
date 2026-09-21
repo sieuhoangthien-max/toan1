@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Chữ Số - Toán Lớp 1</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        /* Vùng hiển thị số cuộn lên */
+        .slot-machine {
+            height: 180px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 300px;
+        }
+
+        .number-display {
+            font-size: 140px;
+            font-weight: 800;
+            color: #38bdf8;
+            text-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+            transition: transform 0.1s ease;
+            position: absolute;
+        }
+
+        .number-display.slide-up {
+            animation: slideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            0% {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Nút bấm chữ số? */
+        .btn-number {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .btn-number:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(14, 165, 233, 0.6);
+        }
+
+        .btn-number:active {
+            transform: scale(0.95);
+        }
+
+        .btn-number:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Thông báo trạng thái lượt chơi */
+        .status-text {
+            font-size: 18px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="status-text" id="statusText">Lượt chơi: 0 / 5</div>
+        
+        <div class="slot-machine">
+            <div id="numberDisplay" class="number-display">--</div>
+        </div>
+
+        <button id="rollBtn" class="btn-number" onclick="nextNumber()">Số?</button>
+    </div>
+
+    <script>
+        // Mảng 4 số đầu ngẫu nhiên, số cuối cùng bắt buộc là 41
+        const sequence = [15, 28, 34, 19, 41];
+        let currentIndex = 0;
+        let isRolling = false;
+
+        // Khởi tạo Web Audio API để tạo âm thanh trực tiếp không cần file
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(frequency, type, duration) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.value = frequency;
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSuccessSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // Âm báo hoàn thành vui tươi khi ra số 41
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // Đô, Mi, Sol, Đô cao
+            notes.forEach((note, index) => {
+                setTimeout(() => {
+                    playBeep(note, 'triangle', 0.2);
+                }, index * 100);
+            });
+        }
+
+        function nextNumber() {
+            if (isRolling || currentIndex >= sequence.length) return;
+            isRolling = true;
+            
+            const btn = document.getElementById('rollBtn');
+            const display = document.getElementById('numberDisplay');
+            const statusText = document.getElementById('statusText');
+            
+            btn.disabled = true;
+            statusText.innerText = `Lượt chơi: ${currentIndex + 1} / 5`;
+
+            let counter = 0;
+            const targetNumber = sequence[currentIndex];
+            
+            // Hiệu ứng chạy số liên tục tạo cảm giác hồi hộp
+            const rollInterval = setInterval(() => {
+                let randomTemp = Math.floor(Math.random() * 80) + 10;
+                display.innerText = randomTemp;
+                playBeep(400, 'sine', 0.05);
+                counter++;
+
+                if (counter > 12) {
+                    clearInterval(rollInterval);
+                    
+                    // Hiển thị số chính thức của lượt đó
+                    display.innerText = targetNumber;
+                    display.classList.remove('slide-up');
+                    void display.offsetWidth; // Trigger reflow để chạy lại animation
+                    display.classList.add('slide-up');
+
+                    if (targetNumber === 41) {
+                        playSuccessSound();
+                    } else {
+                        playBeep(600, 'sine', 0.15);
+                    }
+
+                    currentIndex++;
+                    isRolling = false;
+                    
+                    if (currentIndex < sequence.length) {
+                        btn.disabled = false;
+                    } else {
+                        btn.innerText = "Hoàn tất";
+                        statusText.innerText = "Đã hoàn thành! Chuẩn bị chuyển sang bài mới.";
+                    }
+                }
+            }, 80);
+        }
+    </script>
+</body>
+</html>
