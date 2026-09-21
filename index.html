@@ -122,6 +122,7 @@
         let currentTurn = 0;
         const totalTurns = 5;
         let isRolling = false;
+        let drawnNumbers = []; // Mảng lưu lại các số đã xuất hiện để không bị trùng
 
         // Khởi tạo Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -171,14 +172,19 @@
 
             let counter = 0;
             
-            // Xác định trước kết quả của lượt này:
-            // 4 lượt đầu: ngẫu nhiên từ số có 2 chữ số (10 đến 90)
-            // Lượt thứ 5: bắt buộc là 41
+            // Xác định số mục tiêu cho lượt này
             let targetNumber;
             if (currentTurn < 5) {
-                targetNumber = Math.floor(Math.random() * 81) + 10; // Từ 10 đến 90
+                // Random không trùng lặp cho 4 lượt đầu
+                do {
+                    targetNumber = Math.floor(Math.random() * 81) + 10; // Từ 10 đến 90
+                } while (drawnNumbers.includes(targetNumber) || targetNumber === 41); 
+                // Tránh trùng các số đã ra trước đó và tránh luôn số 41 (để dành cho lượt 5)
+                
+                drawnNumbers.push(targetNumber);
             } else {
-                targetNumber = 41; // Cố định lượt cuối là 41
+                targetNumber = 41; // Lượt cuối luôn là 41
+                drawnNumbers.push(41);
             }
             
             const rollInterval = setInterval(() => {
@@ -206,7 +212,7 @@
                     if (currentTurn < totalTurns) {
                         btn.disabled = false;
                     } else {
-                        btn.disabled = true; // Dừng lại ở số 41
+                        btn.disabled = true; // Dừng lại hoàn toàn khi đến số 41 ở lượt 5
                     }
                 }
             }, 80);
