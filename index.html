@@ -119,12 +119,11 @@
     </div>
 
     <script>
-        // Mảng 4 số đầu ngẫu nhiên, số cuối cùng bắt buộc là 41
-        const sequence = [15, 28, 34, 19, 41];
-        let currentIndex = 0;
+        let currentTurn = 0;
+        const totalTurns = 5;
         let isRolling = false;
 
-        // Khởi tạo Web Audio API để tạo âm thanh trực tiếp không cần file
+        // Khởi tạo Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playBeep(frequency, type, duration) {
@@ -160,17 +159,27 @@
         }
 
         function nextNumber() {
-            if (isRolling || currentIndex >= sequence.length) return;
+            if (isRolling || currentTurn >= totalTurns) return;
             isRolling = true;
             
             const btn = document.getElementById('rollBtn');
             const display = document.getElementById('numberDisplay');
             const statusText = document.getElementById('statusText');
             
-            statusText.innerText = `Lượt chơi: ${currentIndex + 1} / 5`;
+            currentTurn++;
+            statusText.innerText = `Lượt chơi: ${currentTurn} / 5`;
 
             let counter = 0;
-            const targetNumber = sequence[currentIndex];
+            
+            // Xác định trước kết quả của lượt này:
+            // 4 lượt đầu: ngẫu nhiên từ số có 2 chữ số (10 đến 90)
+            // Lượt thứ 5: bắt buộc là 41
+            let targetNumber;
+            if (currentTurn < 5) {
+                targetNumber = Math.floor(Math.random() * 81) + 10; // Từ 10 đến 90
+            } else {
+                targetNumber = 41; // Cố định lượt cuối là 41
+            }
             
             const rollInterval = setInterval(() => {
                 let randomTemp = Math.floor(Math.random() * 80) + 10;
@@ -192,13 +201,12 @@
                         playBeep(600, 'sine', 0.15);
                     }
 
-                    currentIndex++;
                     isRolling = false;
                     
-                    if (currentIndex < sequence.length) {
+                    if (currentTurn < totalTurns) {
                         btn.disabled = false;
                     } else {
-                        btn.disabled = true; // Giữ nguyên nút vô hiệu hóa ở lượt cuối khi đã ra số 41
+                        btn.disabled = true; // Dừng lại ở số 41
                     }
                 }
             }, 80);
